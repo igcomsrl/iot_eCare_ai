@@ -10,8 +10,8 @@ from DataRetriever import DataRetriever
 
 
 def main(n_dimensions: int, n_clusters: int, processInstanceId: str, method: str):
-    metrics = ['temperature', 'systolic', 'diastolic', 'pulse', 'spo2', 'weight']
-    defaults = [36, 115, 75, 75, 98, 75]
+    metrics = ['temperature', 'systolic', 'diastolic', 'pulse', 'spo2', 'weight'] # metrihe da ottenere dal db
+    defaults = [36, 115, 75, 75, 98, 75] # valori di default per ogni metrica
 
     ipDB = os.getenv('INFLUX_IP_AI', 'localhost')
     portDB = os.getenv('INFLUX_PORT_AI', '8086')
@@ -20,20 +20,20 @@ def main(n_dimensions: int, n_clusters: int, processInstanceId: str, method: str
     nameDB = os.getenv('INFLUX_DB_AI', 'giomi')
     
     dr = DataRetriever(metrics)
-    dfs = dr.loadDataFromDB(ipDB, portDB, userDB, passwordDB, nameDB)
+    dfs = dr.loadDataFromDB(ipDB, portDB, userDB, passwordDB, nameDB) # ottengo i dati dal databse
 
     dp = DataProcessor(metrics, defaults)
-    df = dp.applyPipeline(dfs)
+    df = dp.applyPipeline(dfs) # applico le funzioni per fare il merging tra le varie misurazioni
 
     da = DataAnalyzer(n_dimensions, metrics)
-    da.applyPCA(df)
-    kmeans = da.applyKMeans(df, n_clusters)
+    da.applyPCA(df) # applico la PCA
+    kmeans = da.applyKMeans(df, n_clusters) # applico il kmeans
 
-    ax, plt = da.plot(df, kmeans.labels_, kmeans.cluster_centers_)
+    ax, plt = da.plot(df, kmeans.labels_, kmeans.cluster_centers_) # stampo sull'immagine i cluster
 
     method = True if method == 'cluster' else False
 
-    point = da.addPatientPoint(df, ax, processInstanceId, method)
+    point = da.addPatientPoint(df, ax, processInstanceId, method) # stampo sull'immagine il punto del paziente
 
     plt.savefig('/tmp/out.png')
 
