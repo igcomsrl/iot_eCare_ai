@@ -25,12 +25,16 @@ class DataAnalyzer:
             print(e)
     
     def applyPCA(self, dataframe: pd.DataFrame):
+        """ Applica l'algoritmo PCA ai dati """
+
         pca = PCA(n_components=self.n_components)
         fitted = pca.fit_transform(dataframe[self.metrics])
 
         dataframe[self.axis[:self.n_components]] = pd.DataFrame(fitted, index=dataframe.index)
     
     def applyKMeans(self, dataframe: pd.DataFrame, n_clusters: int) -> KMeans:
+        """ Applica KMeans e ritorna l'oggetto contenente i risultati. """
+
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         kmeans.fit(dataframe[self.axis[:self.n_components]])
 
@@ -44,18 +48,19 @@ class DataAnalyzer:
         return cmap
 
     def plot(self, dataframe: pd.DataFrame, labels: List[int], centroids: List[List[float]], zoom = False):
-        if self.n_components == 2:
+         # plot dei dati presi dal db
+        if self.n_components == 2: # 2D
             ax = plt.subplot(1, 1, 1)
             scat = ax.scatter(dataframe['x'], dataframe['y'], c=labels, cmap=self.cmap, label=labels)
-        else:
+        else: # 3D
             fig = plt.figure()
             ax = Axes3D(fig)
-            scat = ax.scatter(dataframe['x'], dataframe['y'], dataframe['z'], c=labels, cmap=self.cmap, label=labels, alpha=0.3)
+            scat = ax.scatter(dataframe['x'], dataframe['y'], dataframe['z'], c=labels, cmap=self.cmap, label=labels, alpha=0.1)
 
         # handle = list(scat.legend_elements())
         # handle.append(mpatches.Patch(color='black', label='Selected patient'))
 
-        legend = ax.legend(*scat.legend_elements(), loc='upper right', title='Clusters')
+        legend = ax.legend(*scat.legend_elements(), loc='upper right', title='Clusters') # inserimento legenda
         ax.add_artist(legend)
 
         # arr = np.arange(len(centroids))
@@ -74,19 +79,21 @@ class DataAnalyzer:
         return ax, plt
 
     def addPatientPoint(self, dataframe: pd.DataFrame, ax: Axes, processInstanceId: str, lastOrKM: bool):
+        """ Funzione che inserisce nell'immagine il punto relativo al paziente """
+
         #If lastOrKM is true it plots the cluster of all patient's data
         patientData = dataframe[dataframe['processInstanceId'] == processInstanceId]
 
-        if lastOrKM:
+        if lastOrKM: # se devo aggiungere il cluster relativo alle misurazioni
             kmeansPatient = KMeans(n_clusters=1)
             kmeansPatient.fit(patientData[self.axis[:self.n_components]])
             pointToPlot = kmeansPatient.cluster_centers_[0]
-        else:
+        else: # oppure solo l'ultima misurazione 
             pointToPlot = patientData.tail(1)[self.axis[:self.n_components]].to_numpy()[0]
 
-        if self.n_components == 2:
+        if self.n_components == 2: # 2D
             ax.scatter(pointToPlot[0], pointToPlot[1], marker='*', c='black', s=450, label='Selected patient')
-        else:
+        else: # 3D
             ax.scatter(pointToPlot[0], pointToPlot[1], pointToPlot[2], marker='*', c='black', s=450, label='Selected patient')
         
         return pointToPlot
@@ -94,6 +101,5 @@ class DataAnalyzer:
     
 
         
-
 
 
